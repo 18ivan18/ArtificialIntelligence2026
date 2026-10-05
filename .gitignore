@@ -1,0 +1,22 @@
+# Jupyter
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Environments and tooling
+.python-version
+.vscode
+.idea
+
+# Sync cache file
+.dccache
+
+.DS_Store
+
+*.out
