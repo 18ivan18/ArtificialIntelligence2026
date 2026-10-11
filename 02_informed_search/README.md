@@ -56,6 +56,10 @@ the goal.
 
 ## The algorithms
 
+In the costs below, `b` is the branching factor, `d` the depth of the shallowest goal, `m` the
+maximum depth of the search space, `k` a beam width, `C*` the optimal cost and `ε` the smallest
+action cost.
+
 ### Greedy Best-First Search
 
 `f(n) = h(n)`. Expand whatever looks closest to the goal and pay no attention to what the trip has
@@ -64,8 +68,8 @@ cost so far.
 - **Complete?** **Yes** in finite state spaces, provided you check for repeated states. **No** in
   infinite ones — it can follow an infinite branch that always looks promising.
 - **Cost optimal?** **No.**
-- **Time?** **O(|V|)** in the worst case; with a good heuristic, far better.
-- **Space?** **O(|V|)** — it keeps the whole frontier.
+- **Time?** **O(b^m)** in the worst case; with a good heuristic, far better.
+- **Space?** **O(b^m)** — it keeps the whole frontier, so the space cost is the time cost.
 
 On the Romania map with Bucharest as the goal, greedy search from Arad goes to Sibiu, then to
 Fagaras — because Fagaras _looks_ closer than Rimnicu Vilcea — and reaches Bucharest having
@@ -80,9 +84,9 @@ estimate of the total cost of the cheapest solution _through_ `n`.
 - **Complete?** **Yes.**
 - **Cost optimal?** **Yes**, provided `h` is admissible (for tree-like search) or consistent (for
   graph search).
-- **Time?** Exponential in the worst case, and sharply better than that with a good heuristic.
-- **Space?** Exponential in the worst case — it keeps every generated node, and in practice this
-  is what stops A\* long before time does.
+- **Time?** **O(b^d)** in the worst case, and sharply better than that with a good heuristic.
+- **Space?** **O(b^d)** — it keeps every generated node, and in practice this is what stops A\*
+  long before time does.
 
 A\* expands every node with `f(n) < C*` and no node with `f(n) > C*`, where `C*` is the optimal
 cost. Nodes with `f(n) = C*` may or may not be expanded. So the quality of the heuristic decides
@@ -116,8 +120,9 @@ rest away.
 
 - **Complete?** **No** — the only path to the goal can be discarded.
 - **Cost optimal?** **No.**
-- **Time?** **O(k · d)**
-- **Space?** **O(k)** — constant in the size of the problem, which is the entire point.
+- **Time?** **O(b · m · k)** — `k` nodes expanded per level, `b` successors each, over `m` levels.
+- **Space?** **O(b · k)** — the beam itself, plus the successors it is picking from. Constant in
+  the size of the problem, which is the entire point.
 
 `k = 1` is hill climbing, below. `k = ∞` is ordinary best-first search. Everything useful is in
 between, and choosing `k` is trading the guarantee of finding an answer against being able to run
@@ -169,7 +174,7 @@ the current one**, and you go round again.
 
 - **Complete?** **Yes.**
 - **Cost optimal?** **Yes**, with an admissible heuristic.
-- **Time?** Exponential, and it re-expands the upper levels on every pass.
+- **Time?** **O(b^d)**, and it re-expands the upper levels on every pass.
 - **Space?** **O(bd)** — linear, and that is the entire reason it exists.
 
 The catch is worth stating plainly, because it decides whether IDA\* helps you at all: **it is only
@@ -284,13 +289,13 @@ across all 23 roads.
 | Algorithm          | Complete? | Cost optimal?         | Time                         | Space             | What it holds                  |
 | ------------------ | --------- | --------------------- | ---------------------------- | ----------------- | ------------------------------ |
 | Uniform-Cost       | Yes       | Yes                   | O(b^(1+⌊C\*/ε⌋))             | O(b^(1+⌊C\*/ε⌋))  | priority queue                 |
-| Greedy Best-First  | Yes ¹     | No                    | O(\|V\|) worst               | O(\|V\|) worst    | priority queue                 |
-| A\*                | Yes       | Yes ²                 | exponential worst            | exponential worst | priority queue                 |
+| Greedy Best-First  | Yes ¹     | No                    | O(b^m)                       | O(b^m)            | priority queue                 |
+| A\*                | Yes       | Yes ²                 | O(b^d)                       | O(b^d)            | priority queue                 |
 | Weighted A\* (W)   | Yes       | No, but ≤ W × optimal | falls as W rises             | falls as W rises  | priority queue                 |
-| IDA\*              | Yes       | Yes ²                 | exponential, with repeats    | **O(bd)**         | a stack                        |
+| IDA\*              | Yes       | Yes ²                 | O(b^d), with repeats         | **O(bd)**         | a stack                        |
 | RBFS               | Yes       | Yes ²                 | depends on subtree switching | **O(bd)**         | current path + siblings        |
 | Memory-Bounded A\* | Yes ³     | Yes ³                 | —                            | **O(limit)**      | priority queue capped at limit |
-| Beam (width k)     | No        | No                    | O(k · d)                     | **O(k)**          | priority queue capped at k     |
+| Beam (width k)     | No        | No                    | O(b · m · k)                 | **O(b · k)**      | priority queue capped at k     |
 | Hill Climbing      | No        | No                    | O(bm)                        | **O(b)**          | the best successor, only       |
 
 1. In finite state spaces, with repeated-state checking.
@@ -314,7 +319,7 @@ Some things worth drawing out:
   exactly as much as you ask it to and tells you the worst case in advance. Most real systems live
   somewhere on that dial rather than at either end.
 - **The whole column is about memory.** Read the space column on its own: A\* keeps everything, beam
-  keeps `k`, hill climbing keeps one. Every guarantee in the table above is paid for in memory,
+  keeps `k` and the successors it is choosing between, hill climbing keeps one node's successors. Every guarantee in the table above is paid for in memory,
   and the algorithms people actually run on large problems are the ones lower down it. IDA\* and
   RBFS are the two that keep A\*'s answer while giving up A\*'s appetite — and between them, RBFS
   is the one that also remembers what it learned.
