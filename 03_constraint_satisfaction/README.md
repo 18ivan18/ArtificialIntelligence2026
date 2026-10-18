@@ -1,7 +1,5 @@
 # Constraint Satisfaction Problems
 
-**Code:** [03_constraint_satisfaction.ipynb](./03_constraint_satisfaction.ipynb)
-
 For the last two weeks a state was a black box. The search knew how to ask three questions of it —
 is this the goal, what can I do from here, what does that cost — and nothing else. Every problem
 looked the same from the outside, so the only thing an algorithm could do was try actions and see.
@@ -74,8 +72,8 @@ the wrong tool and local search is the right one — see below.
 
 - **Precedence** — if task `T1` takes `d1` and must finish before `T2` starts, then `T1 + d1 <= T2`.
   Putting a wheel on before the hubcap is this.
-- **Disjunctive** — two tasks needing the same tool cannot overlap, so *either* `T1 + d1 <= T2`
-  *or* `T2 + d2 <= T1`. That mixes arithmetic and logic, but it still reduces to a set of allowed
+- **Disjunctive** — two tasks needing the same tool cannot overlap, so _either_ `T1 + d1 <= T2`
+  _or_ `T2 + d2 <= T1`. That mixes arithmetic and logic, but it still reduces to a set of allowed
   pairs, so it is an ordinary binary constraint.
 
 This is the example that shows domains need not be small symbolic sets. Values are integers,
@@ -102,7 +100,7 @@ Which variable to assign next, and which value to try first, change the running 
 magnitude. They pull in opposite directions, which is the thing to understand.
 
 **Minimum remaining values (MRV)** — choose the variable with the fewest legal values left. Also
-called *most constrained variable*, or *fail-first*: if a variable is going to fail, it is cheaper
+called _most constrained variable_, or _fail-first_: if a variable is going to fail, it is cheaper
 to find out now, near the top of the tree, than after assigning ten other variables beneath it.
 
 **Degree heuristic** — choose the variable involved in the most constraints on unassigned
@@ -128,7 +126,7 @@ unassigned neighbours. If a domain empties, this branch is dead, so backtrack im
 and it catches failure much earlier than checking consistency at each step would.
 
 **Arc consistency** — stronger. An arc `X -> Y` is consistent when, for every value in `X`'s
-domain, there is *some* value in `Y`'s domain that satisfies the constraint. If a value in `X` has
+domain, there is _some_ value in `Y`'s domain that satisfies the constraint. If a value in `X` has
 no partner, nothing can use it, so delete it. Deleting it may break another arc pointing into `X`,
 so those go back in the queue. That is **AC-3**: keep a queue of arcs, and re-examine the
 neighbours of any domain you shrink.
@@ -170,12 +168,12 @@ for the problem.
 **Representation.** One queen per column, so queen `i` lives in column `i` and the column constraint
 holds by construction. Keep four arrays:
 
-| array | length | holds |
-| --- | ---: | --- |
-| `queens` | `n` | the row of the queen in each column |
-| `rows` | `n` | how many queens are in each row |
-| `diag1` | `2n - 1` | how many queens are on each diagonal where `row + col` is constant |
-| `diag2` | `2n - 1` | how many queens are on each diagonal where `row - col` is constant |
+| array    |   length | holds                                                              |
+| -------- | -------: | ------------------------------------------------------------------ |
+| `queens` |      `n` | the row of the queen in each column                                |
+| `rows`   |      `n` | how many queens are in each row                                    |
+| `diag1`  | `2n - 1` | how many queens are on each diagonal where `row + col` is constant |
+| `diag2`  | `2n - 1` | how many queens are on each diagonal where `row - col` is constant |
 
 An `n × n` board has `2n - 1` diagonals in each direction. Square `(row, col)` is on `diag1[row + col]`
 and `diag2[n - 1 - row + col]`; the `n - 1` shifts `row - col` from `-(n-1)..n-1` to `0..2n-2`.
@@ -243,24 +241,24 @@ only. On the Australia map, removing South Australia leaves a tree, so a cutset 
 
 ## Comparing the approaches
 
-| | Builds a solution | Complete? | Good when |
-|---|---|---|---|
-| Backtracking | from nothing, one variable at a time | yes | always works, rarely fast alone |
-| + MRV / degree / LCV | same | yes | almost always worth it, costs little |
-| + forward checking | same | yes | cheap, catches dead branches early |
-| + arc consistency (MAC) | same | yes | tight constraints, large domains |
-| Min-conflicts | by repairing a complete guess | **no** | solutions dense, constraints loose |
-| Tree / cutset methods | exploits the graph shape | yes | the graph is a tree or nearly one |
+|                         | Builds a solution                    | Complete? | Good when                            |
+| ----------------------- | ------------------------------------ | --------- | ------------------------------------ |
+| Backtracking            | from nothing, one variable at a time | yes       | always works, rarely fast alone      |
+| + MRV / degree / LCV    | same                                 | yes       | almost always worth it, costs little |
+| + forward checking      | same                                 | yes       | cheap, catches dead branches early   |
+| + arc consistency (MAC) | same                                 | yes       | tight constraints, large domains     |
+| Min-conflicts           | by repairing a complete guess        | **no**    | solutions dense, constraints loose   |
+| Tree / cutset methods   | exploits the graph shape             | yes       | the graph is a tree or nearly one    |
 
 ### What that is worth, measured
 
 On the Sudoku in the notebook, with nothing but the first-unassigned variable and values in any
 order:
 
-| | assignments | time |
-|---|---:|---:|
-| plain backtracking | 14,740,819 | 61 s |
-| MRV + forward checking | 81 | 0.005 s |
+|                        | assignments |    time |
+| ---------------------- | ----------: | ------: |
+| plain backtracking     |  14,740,819 |    61 s |
+| MRV + forward checking |          81 | 0.005 s |
 
 Eighty-one assignments for eighty-one squares means it never backtracked at all. The two
 techniques are perhaps thirty lines between them, and they are the difference between a minute and
