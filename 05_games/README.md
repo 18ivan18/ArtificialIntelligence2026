@@ -231,3 +231,88 @@ evaluation function cannot absorb that. Real engines either fix the parity or ex
 positions instead of stopping on them.
 
 So the two halves of this week make opposite promises. Alpha-beta is free. The cutoff is not.
+
+## The homework: tic-tac-toe
+
+The whole game tree is about half a million nodes, so this is the one game on the list where none of
+the second half of this week applies: no evaluation function, no depth limit, no quiescence. The
+agent plays perfectly, and the only question is whether your search can say so.
+
+**Two modes, one program.** The first line of input picks. JUDGE reads `TURN X` and a board, prints
+one move and exits — that is the only mode the automatic tests use. GAME reads `FIRST` and `HUMAN`
+and plays a full game at the terminal. Both are required; only JUDGE is graded.
+
+**Reading the framed board.** Nothing in `+---+---+---+` or the bars carries information, so do not
+parse the frame: scan the text for `X`, `O` and `_` and take them in reading order. Three lines of
+code, and it is immune to stray characters in the assignment text. In GAME mode read exactly
+`2n + 1` lines and no more, or the same read will swallow the moves typed after the board.
+
+**The state is the vocabulary from the top of this page.** `to_move` comes from `TURN`, `actions(s)`
+is the empty cells, `result(s, a)` writes the symbol and flips the player, `is_terminal(s)` is a line
+of three or a full board. One thing is easy to miss: a board handed to you mid-game may already be
+won, so compute the winner from the board you read rather than assuming the game is still live. That
+is also what makes the terminal case work — JUDGE expects `-1` there, not a move.
+
+**Who is MAX.** `TURN` names the side to move and it is not always X. Either make that side the
+maximiser, so the root is always a max node and a positive value means the side on move is winning,
+or keep X as MAX for ever and negate when O is on move. Both work; mixing them does not.
+
+**Depth belongs in the utility, and this is the graded part.** Scoring a win `+1` and a loss `-1` is
+not enough, because a move that wins now and a move that wins three plies later both score `+1` and
+the search keeps whichever it happened to see first. Score a terminal by when it arrives instead:
+
+    utility = 1000 - moves    if the maximiser won
+            = moves - 1000    if the maximiser lost
+            = 0               draw
+
+The subtraction does both halves of the job. A win is worth more the sooner it comes, so the agent
+finishes instead of dawdling and handing a human another turn to escape. A loss is worth more the
+later it comes, so a lost position plays on and makes the opponent prove it rather than resigning
+into the fastest defeat — which is exactly where a human blunders.
+
+Measured on the official tests: the depth-aware utility passes all 14, and the `±1` version passes 9
+and fails 5 with `suboptimal: violates win-now/lose-late tie-break`. At 3×3 nothing else about the
+search can earn or cost you points. This line can.
+
+**What the checker accepts.** It runs its own depth-aware search and accepts any move from the
+optimal set, so the sample output is not a target: on the empty board all nine moves draw, all nine
+are accepted, and `1 1` is as correct as the `2 2` printed in the assignment. Where only one move is
+optimal — the win, the block, the one reply that saves a draw — it demands that move. The accepted
+set is not closed under symmetry, though. In
+
+    X _ _
+    _ O _
+    _ _ X
+
+with O to move, `1 3` is accepted and its mirror image `3 1` is not, although reflecting the board
+maps one onto the other. Enumerate the cells in reading order and replace your best move only on a
+strictly better value — which is what the checker itself does — and you stay inside its set.
+
+**Output and timing.** `row col`, 1-based, or `-1` for a terminal position. You may print
+`# TIMES_MS: alg=<milliseconds>` as the first line; the checker strips it and `--bench` reports it.
+The limit is one second per test, which is three orders of magnitude more than this problem needs.
+Run the tests with `judge run --bench -p tic-tac-toe <your executable>`; it runs an already-built
+binary rather than compiling, and `-p` is worth passing because the automatic detection goes by file
+name.
+
+**What alpha-beta is worth here.** The empty board, X to move, searched to the end:
+
+|                                              |                nodes |
+| -------------------------------------------- | -------------------: |
+| minimax                                      |              549,946 |
+| alpha-beta, cells in reading order           |               20,866 |
+| alpha-beta, cells in random order            | 22,649 (mean of 200) |
+| alpha-beta, centre, then corners, then edges |            **7,865** |
+
+Twenty-six times from the pruning, and another 2.7 from ordering nine cells by hand. Note that the
+random order comes out slightly worse than reading order, the opposite of the Connect Four table
+above: reading order here starts with a corner, which is already a decent opening. None of this is
+needed to pass — half a million nodes is milliseconds — but minimax and alpha-beta must agree on the
+value of every position, and that is the free check that your two cutoff conditions are the right
+way round.
+
+**GAME mode is where you find the bugs.** Print the board after every move, reject an illegal move
+and ask again instead of crashing, and end with `WINNER: X`, `WINNER: O` or `DRAW`. Perfect play from
+either side is a draw, so against a correct agent you cannot win. If you do win, the position where
+your fork appeared is a test case: write it out as a JUDGE input and see what the search says about
+it.
