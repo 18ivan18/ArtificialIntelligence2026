@@ -150,8 +150,8 @@ children split that box in two, and the leaves are the smallest boxes.
 Two choices to be able to defend:
 
 - **The median.** Each level halves the points, so the tree is balanced, about `log₂ N` deep: seven
-  levels for 120 iris flowers. Finding the median is linear (`nth_element` in C++,
-  `np.argpartition` in numpy), so the build costs `O(N log N)`.
+  levels for 120 iris flowers. Finding the median is linear (`nth_element` in C++),
+  though sorting each level as the notebook does is simpler and costs `O(N log N)` overall.
 - **The feature.** Either cycle through them with the depth (`depth mod n`), the textbook version,
   or take the feature with the widest spread among the points at hand, which makes squarer boxes
   when features have different ranges. Both are correct; the second usually prunes better.
@@ -215,7 +215,7 @@ dimensions:
 |  points | distances measured |
 | ------: | -----------------: |
 |   1,000 |                 41 |
-|  10,000 |                 49 |
+|  10,000 |                 48 |
 | 100,000 |                 53 |
 
 Then more features, with 20,000 points:
@@ -223,9 +223,9 @@ Then more features, with 20,000 points:
 | features | share of points measured |
 | -------: | -----------------------: |
 |        2 |                     0.2% |
-|        5 |                     2.7% |
-|        8 |                      15% |
-|       10 |                      65% |
+|        5 |                     2.4% |
+|        8 |                      18% |
+|       10 |                      69% |
 |       12 |                      95% |
 |       16 |                    99.8% |
 
@@ -236,7 +236,7 @@ away in every direction, so no plane is far enough. With 20,000 points the tree 
 everything from about twelve features on. A rough rule: a kd-tree pays only while `N` is much
 larger than `2^n`, since it takes about that many points to split every feature even once. The
 wine data in the notebook, thirteen features and 142 bottles, is on the wrong side of it: the tree
-measures 96% of the bottles, correctly and for nothing. Why distance stops meaning anything in high
+measures 98% of the bottles, correctly and for nothing. Why distance stops meaning anything in high
 dimensions is the next section.
 
 For the homework, the tree only has to replace the "find the k nearest" step. Give it the same
@@ -323,21 +323,21 @@ imbalanced data this is not a refinement but a requirement — an unstratified f
 missing a class entirely.
 
 The standard deviation deserves more respect than it usually gets. In the notebook, 10-fold CV on
-the wine data gives spreads of ±3 to ±8 percentage points across folds, which is larger than the
+the wine data gives spreads of ±3 to ±5 percentage points across folds, which is larger than the
 difference between most values of `k`. On a single run the ranking of `k` is mostly noise. Repeat
 the CV over twenty different shuffles and the real curve appears:
 
 |   k | mean CV accuracy over 20 shuffles |
 | --: | --------------------------------: |
-|   1 |                            0.9449 |
-|   5 |                            0.9620 |
-|   9 |                            0.9688 |
-|  25 |                        **0.9740** |
-|  51 |                            0.9430 |
+|   1 |                            0.9494 |
+|   5 |                            0.9386 |
+|   9 |                            0.9582 |
+|  25 |                        **0.9712** |
+|  51 |                            0.9553 |
 
-Now the shape is unmistakable — rising from `k = 1`, peaking in the twenties, falling away again —
-and the uncertainty on each entry is under half a percentage point. Nothing changed but how many
-times it was measured.
+Now the shape is unmistakable — a dip at `k = 3`, a climb to a peak in the twenties, then a fall
+away again — and the uncertainty on each entry is around half a percentage point. Nothing changed
+but how many times it was measured.
 
 ## Beyond accuracy
 
